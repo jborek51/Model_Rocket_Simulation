@@ -17,12 +17,17 @@ classdef F15_Motor
             2.2100,2.4940,2.7630,3.1200,...
             3.3820,3.4040,3.4180,3.4500,...
             3.5000]';
-        t_b                                     %   s - Total motor burn time
         eta = 1;                                %   Motor efficiency
+    end
+    properties (Dependent)
+        t_b                                     %   s - Total motor burn time
     end
     methods 
         function obj = F15_Motor()              %   Constructor
-            obj.t_b = obj.T_b(end);             %   Set total burn time
+            
+        end
+        function val = get.t_b(obj)             %   Get total burn time 
+            val = obj.T_b(end);
         end
     end
 end
