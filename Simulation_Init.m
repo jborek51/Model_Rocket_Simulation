@@ -8,7 +8,8 @@ Mot = F15_Motor;                        %   Motor parameters
 %%  Run Simulation
 sim('Simulation_Model')
 %%  Store and Save Outputs
-Log_Data
+tsc = signalcontainer(logsout);
+% Log_Data
 % Save_Data
 %%  Plot Results
 Plot_Kinematics(Sim);                   %   Plot altitude, velocity, and acceleration 
