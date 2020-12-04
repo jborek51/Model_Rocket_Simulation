@@ -1,4 +1,4 @@
-classdef Environment
+classdef wind3D
     %   This class initializes the environmental parameters 
     properties
         grav
@@ -18,7 +18,7 @@ classdef Environment
         
     end
     methods 
-        function obj = Environment()
+        function obj = wind3D()
             obj.grav            = SIM.parameter('Value',9.8066,'Unit','m/s^2','Description','Acceleration due to gravity');
             obj.density         = SIM.parameter('Value',1.225,'Unit','kg/m^3','Description','Density at sea level');
             obj.gndAlt          = SIM.parameter('Value',0,'Unit','m','Description','Launch field altitude above sea level');

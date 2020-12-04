@@ -1,10 +1,15 @@
 %%  1 DOF Simulation Initialization File
 clear;  clc
 computer = 1;                           %   Computer reference for John
-%%  Initialize Simulation Parameters 
-Env = ENV.Environment;                      %   Environmental parameters 
+%%  Load Components 
+loadComponent('Concord2D');             %   Environment parameters 
 Veh = Vehicle;                          %   Vehicle parameters 
-Mot = F15_Motor;                        %   Motor parameters
+
+%%  Environment Properties 
+Env.wind0.setValue(5,'m/s');
+Env.windZ.setValue(5,'m/s');
+
+
 %%  Run Simulation
 simWithMonitor('Simulation_Model')
 %%  Store and Save Outputs
