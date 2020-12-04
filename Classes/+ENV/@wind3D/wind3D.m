@@ -1,6 +1,6 @@
 classdef wind3D
     %   This class initializes the environmental parameters 
-    properties
+    properties (SetAccess = private)
         grav
         density
         gndAlt
@@ -15,7 +15,9 @@ classdef wind3D
         windZ
     end
     properties (Dependent)
-        
+        windVecX
+        windVecY
+        windVecZ
     end
     methods 
         function obj = wind3D()
@@ -29,8 +31,20 @@ classdef wind3D
             obj.R               = SIM.parameter('Value',8.3145,'Unit','J/(mol*K)','Description','Universal gas constant');
             obj.M               = SIM.parameter('Value',28.97,'Unit','','Description','Molar mass of air');
             obj.temp            = SIM.parameter('Value',288.15,'Unit','K','Description','Ground temperature');
-            obj.wind0           = SIM.parameter('Value',[0,0,0],'Unit','m/s','Description','Wind speed at ground level');
-            obj.windZ           = SIM.parameter('Value',[0,0,0],'Unit','m/s','Description','Wind speed at 5000 ft');
+            obj.wind0           = SIM.parameter('Value',[0,0,0],'Unit','m/s','Description','Wind vector at ground level');
+            obj.windZ           = SIM.parameter('Value',[0,0,0],'Unit','m/s','Description','Wind vector at 5000 ft');
+        end
+        function val = get.windVecX(obj)
+            V = [obj.wind0.Value(1) obj.windZ.Value(1)];
+            val = SIM.parameter('Value',V,'Unit','(m/s)/m','Description','Wind X component look-up vector');
+        end
+        function val = get.windVecY(obj)
+            V = [obj.wind0.Value(2) obj.windZ.Value(2)];
+            val = SIM.parameter('Value',V,'Unit','(m/s)/m','Description','Wind Y component look-up vector');
+        end
+        function val = get.windVecZ(obj)
+            V = [obj.wind0.Value(3) obj.windZ.Value(3)];
+            val = SIM.parameter('Value',V,'Unit','(m/s)/m','Description','Wind Z component look-up vector');
         end
     end
 end
