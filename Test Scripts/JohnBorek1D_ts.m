@@ -2,7 +2,7 @@
 clear;  clc
 computer = 1;                           %   Computer reference for John
 %%  Load Components 
-loadComponent('Concord2D');             %   Environment parameters 
+loadComponent('Concord1D');             %   Environment parameters 
 Veh = Vehicle;                          %   Vehicle parameters 
 
 %%  Environment Properties 
