@@ -2,11 +2,11 @@
 clear;  clc
 computer = 1;                           %   Computer reference for John
 %%  Initialize Simulation Parameters 
-Env = Environment;                      %   Environmental parameters 
+Env = ENV.Environment;                      %   Environmental parameters 
 Veh = Vehicle;                          %   Vehicle parameters 
 Mot = F15_Motor;                        %   Motor parameters
 %%  Run Simulation
-sim('Simulation_Model')
+simWithMonitor('Simulation_Model')
 %%  Store and Save Outputs
 tsc = signalcontainer(logsout);
 % Log_Data
