@@ -2,6 +2,7 @@
 clear;  clc
 computer = 1;                           %   Computer reference for John
 %%  Load Components 
+loadComponent('noControl');             %   Controller parameters 
 loadComponent('Concord3D');             %   Environment parameters 
 loadComponent('SLI2020_SubScale');      %   Vehicle parameters 
 

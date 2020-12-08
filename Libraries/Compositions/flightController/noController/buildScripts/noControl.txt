@@ -1,0 +1,16 @@
+fltCtrl.kp.Value = 0.0000e+00
+fltCtrl.kp.Unit = '(deg)/(deg)'
+fltCtrl.kp.NoScale = false
+fltCtrl.kp.Description = 'Proportional gain'
+fltCtrl.ki.Value = 0.0000e+00
+fltCtrl.ki.Unit = '(deg)/(deg*s)'
+fltCtrl.ki.NoScale = false
+fltCtrl.ki.Description = 'Integral gain'
+fltCtrl.kd.Value = 0.0000e+00
+fltCtrl.kd.Unit = '(deg)/(deg/s)'
+fltCtrl.kd.NoScale = false
+fltCtrl.kd.Description = 'Derivative gain'
+fltCtrl.tau.Value = 1.0000e+00
+fltCtrl.tau.Unit = 's'
+fltCtrl.tau.NoScale = false
+fltCtrl.tau.Description = 'Time Constant'
