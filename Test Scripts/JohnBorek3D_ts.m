@@ -3,7 +3,7 @@ clear;  clc
 computer = 1;                           %   Computer reference for John
 %%  Load Components 
 loadComponent('Concord3D');             %   Environment parameters 
-% Veh = Vehicle;                          %   Vehicle parameters 
+loadComponent('SLI2020_SubScale');      %   Vehicle parameters 
 
 %%  Environment Properties 
 Env.wind0.setValue([5 0 0]*0.621371,'m/s');
