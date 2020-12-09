@@ -30,7 +30,7 @@ Env.R.Value = 8.3145e+00
 Env.R.Unit = 'J/(mol*K)'
 Env.R.NoScale = false
 Env.R.Description = 'Universal gas constant'
-Env.M.Value = 2.8970e+01
+Env.M.Value = 2.8964e-02
 Env.M.Unit is unitless or has no unit specified
 Env.M.NoScale = false
 Env.M.Description = 'Molar mass of air'

@@ -3,7 +3,6 @@ clear;  clc
 computer = 1;                           %   Computer reference for John
 %%  Load Components 
 loadComponent('Concord1D');             %   Environment parameters 
-Veh = Vehicle;                          %   Vehicle parameters 
 
 %%  Environment Properties 
 Env.wind0.setValue(5*0.621371,'m/s');

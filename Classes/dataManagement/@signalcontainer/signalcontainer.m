@@ -57,10 +57,6 @@ classdef signalcontainer < dynamicprops
                             end
                         end
                     end
-                    % Print out power summary for the user
-                    if p.Results.Verbose
-                        obj.powersummary
-                    end
                 case 'struct'
                     % Add metadata to the signal container at highest level
                     obj.addprop('metadata');
@@ -119,8 +115,38 @@ classdef signalcontainer < dynamicprops
                     error('Unknown data type to parse')
             end
         end
-
-
+        function plotPosition(obj,varargin)
+            p = inputParser;
+            addOptional(p,'Xlim',[0 inf],@isnumeric);
+            addOptional(p,'Ylim',[0 inf],@isnumeric);
+            addOptional(p,'scl',3.2808,@isnumeric);
+            parse(p,varargin{:})
+            figure; subplot(3,1,1); hold on; grid on;
+            plot(obj.positionVec.Time,squeeze(obj.positionVec.Data(1,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('X-Position [ft]');
+            subplot(3,1,2); hold on; grid on;
+            plot(obj.positionVec.Time,squeeze(obj.positionVec.Data(2,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('Y-Position [ft]');
+            subplot(3,1,3); hold on; grid on;
+            plot(obj.positionVec.Time,squeeze(obj.positionVec.Data(3,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('Z-Position [ft]');
+        end
+        function plotVelocity(obj,varargin)
+            p = inputParser;
+            addOptional(p,'Xlim',[0 inf],@isnumeric);
+            addOptional(p,'Ylim',[0 inf],@isnumeric);
+            addOptional(p,'scl',3.2808,@isnumeric);
+            parse(p,varargin{:})
+            figure; subplot(3,1,1); hold on; grid on;
+            plot(obj.velocityVec.Time,squeeze(obj.velocityVec.Data(1,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('X-Velocity [ft/s]');
+            subplot(3,1,2); hold on; grid on;
+            plot(obj.velocityVec.Time,squeeze(obj.velocityVec.Data(2,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('Y-Velocity [ft/s]');
+            subplot(3,1,3); hold on; grid on;
+            plot(obj.velocityVec.Time,squeeze(obj.velocityVec.Data(3,:,:))*p.Results.scl,'b-');
+            xlabel('Time [s]');  ylabel('Z-Velocity [ft/s]');
+        end
     end
 end
 

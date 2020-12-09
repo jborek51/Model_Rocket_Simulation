@@ -25,7 +25,7 @@ classdef wind2D
             obj.railElevation   = SIM.parameter('Unit','deg','Description','Launch rail elevation angle (90 deg = vertical)');
             obj.simDuration     = SIM.parameter('Value',50,'Unit','s','Description','Launch rail azimuth angle');
             obj.R               = SIM.parameter('Value',8.3145,'Unit','J/(mol*K)','Description','Universal gas constant');
-            obj.M               = SIM.parameter('Value',28.97,'Unit','','Description','Molar mass of air');
+            obj.M               = SIM.parameter('Value',0.0289644,'Unit','','Description','Molar mass of air');
             obj.temp            = SIM.parameter('Value',288.15,'Unit','K','Description','Ground temperature');
             obj.wind0           = SIM.parameter('Value',0,'Unit','m/s','Description','Wind speed at ground level');
             obj.windZ           = SIM.parameter('Value',0,'Unit','m/s','Description','Wind speed at 5000 ft');
