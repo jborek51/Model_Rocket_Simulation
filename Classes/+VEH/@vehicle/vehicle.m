@@ -3,9 +3,7 @@ classdef vehicle < dynamicprops
     %   Detailed explanation goes here
     properties (SetAccess = private)
         length
-        boatTailLength
         diameter
-        baseDiameter
         structMass
         inertia_CM
         
@@ -21,6 +19,15 @@ classdef vehicle < dynamicprops
         finTipChord
         finSweep
         finIncidence
+        
+        K
+        noseShape
+        noseLength
+        CnNose
+        bodyLength
+        boatLE
+        boatTailLength
+        baseDiameter
 
         motor
         
@@ -34,6 +41,18 @@ classdef vehicle < dynamicprops
         padMass
         airMass
         
+        CnFin
+        CnBoat
+        CnRocket
+        XcpNose
+        XcpFin
+        XcpBoat
+        XcpBody
+        rCP_Bx
+        
+        Ar
+        Ap
+        
         finPlanformArea
         M6x6_B
     end
@@ -41,9 +60,11 @@ classdef vehicle < dynamicprops
     methods
         %% Constructor
         function obj = vehicle
-            % mass, volume and inertia
+            % size mass, volume and inertia
             obj.length              = SIM.parameter('Unit','m','Description','Vehicle length');
+            obj.bodyLength          = SIM.parameter('Unit','m','Description','Body-tube length');
             obj.boatTailLength      = SIM.parameter('Unit','m','Description','Boattail length');
+            obj.noseLength          = SIM.parameter('Unit','m','Description','Nosecone length');
             obj.diameter            = SIM.parameter('Unit','m','Description','Vehicle diameter');
             obj.baseDiameter        = SIM.parameter('Unit','m','Description','Diameter of the base of the rocket');
             obj.structMass          = SIM.parameter('Unit','kg','Description','Vehicle mass without motor');
@@ -54,16 +75,21 @@ classdef vehicle < dynamicprops
             obj.rCMair_B            = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the CM before motor burn');
             obj.rCP_B               = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the center of pressure');
             
-            % Overall Wing Properties (Used to create portWing and stbdWing
-            obj.numFins       = SIM.parameter('Description','Number of fins','NoScale',true);
-            obj.finLE         = SIM.parameter('Unit','m','Description','Distance from nose to fin leading edge');
-            obj.finThickness  = SIM.parameter('Unit','m','Description','Thickness of the fin');
-            obj.finLength     = SIM.parameter('Unit','m','Description','Length of the fin');
-            obj.finRootChord  = SIM.parameter('Unit','m','Description','Fin root chord');
-            obj.finTipChord   = SIM.parameter('Unit','m','Description','Fin tip chord');
-            obj.finSweep      = SIM.parameter('Unit','deg','Description','Fin sweep angle');
-            obj.finIncidence  = SIM.parameter('Unit','deg','Description','Fin flow incidence angle');
-                        
+            % Overall fin properties 
+            obj.numFins         = SIM.parameter('Unit','','Description','Number of fins','NoScale',true);
+            obj.finLE           = SIM.parameter('Unit','m','Description','Distance from nose to fin leading edge');
+            obj.finThickness    = SIM.parameter('Unit','m','Description','Thickness of the fin');
+            obj.finLength       = SIM.parameter('Unit','m','Description','Length of the fin');
+            obj.finRootChord    = SIM.parameter('Unit','m','Description','Fin root chord');
+            obj.finTipChord     = SIM.parameter('Unit','m','Description','Fin tip chord');
+            obj.finSweep        = SIM.parameter('Unit','deg','Description','Fin sweep angle');
+            obj.finIncidence    = SIM.parameter('Unit','deg','Description','Fin flow incidence angle');
+            
+            obj.K               = SIM.parameter('Value',1,'Unit','','Description','Rocket body lift correction constant');
+            obj.noseShape       = SIM.parameter('Description','Nosecone shape (Conical, Ogive, Parabolic, Haack)','NoScale',true);
+            obj.CnNose          = SIM.parameter('Value',2,'Unit','','Description','Nosecone stability derivative');
+            obj.boatLE          = SIM.parameter('Unit','m','Description','Distance from nose to boattail leading edge');
+            
             obj.motor = VEH.motor;
                         
             % initial conditions 
@@ -141,7 +167,86 @@ classdef vehicle < dynamicprops
             val = SIM.parameter('Value',obj.structMass.Value+obj.motor.motorMass.Value-obj.motor.fuelMass.Value,...
                 'Unit','kg','Description','Vehicle mass after motor burn');
         end
-                            
+                          
+        function val = get.CnFin(obj)
+            N = obj.numFins.Value;
+            df = obj.diameter.Value;
+            Ls = obj.finLength.Value;
+            Lr = obj.finRootChord.Value;
+            Lt = obj.finTipChord.Value;
+            sw = obj.finSweep.Value;
+            V1 = [Ls,Ls/cosd(sw)*sind(sw)+Lt/2];
+            V2 = [0,Lr/2];
+            Lm = norm(V1-V2);
+            Kfb = 1+(df/2)/(Ls+df/2);
+            Cn = Kfb*(4*N*(Ls/df)^2)/(1+sqrt(1+(2*Lm/(Lr+Lt))^2));
+            val = SIM.parameter('Value',Cn,'Unit','','Description','Fin stability derivative');
+        end
+                                  
+        function val = get.CnBoat(obj)
+            df = obj.diameter.Value;
+            dn = obj.baseDiameter.Value;
+            Cn = 2*((df/dn)^2-1);
+            val = SIM.parameter('Value',Cn,'Unit','','Description','Boattail stability derivative');
+        end
+                                  
+        function val = get.CnRocket(obj)
+            Cn = obj.CnBoat.Value+obj.CnFin.Value+obj.CnNose.Value;
+            val = SIM.parameter('Value',Cn,'Unit','','Description','Rocket base stability derivative');
+        end
+                                  
+        function val = get.Ar(obj)
+            ar = pi/4*obj.diameter.Value^2;
+            val = SIM.parameter('Value',ar,'Unit','m^2','Description','Rocket base stability derivative');
+        end
+                                  
+        function val = get.Ap(obj)
+            an = pi*obj.diameter.Value*(sqrt(obj.diameter.Value^2+obj.noseLength.Value^2));
+            ab = pi*obj.diameter.Value*(obj.bodyLength.Value+obj.boatTailLength.Value);
+            val = SIM.parameter('Value',an+ab,'Unit','m^2','Description','Rocket base stability derivative');
+        end
+        
+        function val = get.XcpNose(obj)
+            if strcmpi(obj.noseShape.Value,'conical')
+                X = 2/3*obj.noseLength.Value;
+            elseif strcmpi(obj.noseShape.Value,'ogive')
+                X = 0.466*obj.noseLength.Value;
+            elseif strcmpi(obj.noseShape.Value,'parabolic') || strcmpi(obj.noseShape.Value,'haack')
+                X = 1/2*obj.noseLength.Value;
+            else
+                error('noseShape must be Conical, Ogive, Parabolic, or Haack');
+            end
+            val = SIM.parameter('Value',X,'Unit','m','Description','Nosecone center of pressure location');
+        end
+        
+        function val = get.XcpFin(obj)
+            XLE = obj.finLE.Value;
+            Ls = obj.finLength.Value;
+            Lr = obj.finRootChord.Value;
+            Lt = obj.finTipChord.Value;
+            sw = obj.finSweep.Value;
+            V1 = [Ls,Ls/cosd(sw)*sind(sw)+Lt/2];
+            V2 = [0,Lr/2];
+            Lm = norm(V1-V2);
+            X = XLE+(Lm*(Lr+2*Lt))/(3*(Lr+Lt))+1/6*(Lr+Lt-(Lr*Lt)/(Lr+Lt));
+            val = SIM.parameter('Value',X,'Unit','m','Description','Nosecone center of pressure location');
+        end
+        
+        function val = get.XcpBoat(obj)
+            XLE = obj.boatLE.Value;
+            Lb = obj.boatTailLength.Value;
+            df = obj.diameter.Value;
+            dn = obj.baseDiameter.Value;
+            X = XLE+Lb/3*(1+(1-(df/dn))/(1-(df/dn)^2));
+            val = SIM.parameter('Value',X,'Unit','m','Description','Boattail center of pressure location');
+        end
+        
+        function val = get.XcpBody(obj)
+            XLE = obj.noseLength.Value;
+            Lb = obj.bodyLength.Value;
+            X = XLE+1/2*Lb;
+            val = SIM.parameter('Value',X,'Unit','m','Description','Body center of pressure location');
+        end
         % aerodynamic reference area
         function val = get.finPlanformArea(obj)
             Sref = 1/2*obj.finLength.Value*(obj.finRootChord.Value+obj.finTipChord.Value);

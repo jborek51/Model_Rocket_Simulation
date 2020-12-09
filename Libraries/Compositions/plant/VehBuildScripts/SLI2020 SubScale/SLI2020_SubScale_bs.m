@@ -15,7 +15,9 @@ Veh.motor.position.setValue([20*in2m;0;0],'m');
 
 %%  Vehicle parameters 
 Veh.length.setValue(21.375*in2m,'m');
+Veh.bodyLength.setValue(18*in2m,'m');
 Veh.boatTailLength.setValue(0.875*in2m,'m');
+Veh.noseLength.setValue(2.5*in2m,'m');
 Veh.diameter.setValue(1.375*in2m,'m');
 Veh.baseDiameter.setValue(0.8*in2m,'m');
 
@@ -37,6 +39,8 @@ Veh.finTipChord.setValue(1*in2m,'m');
 Veh.finSweep.setValue(30,'deg');
 Veh.finIncidence.setValue(0,'deg');
 
+Veh.noseShape.setValue('Haack','');
+Veh.boatLE.setValue(20.5*in2m,'m');
 %% save file in its respective directory
 saveBuildFile('Veh',mfilename,'variant',["PLANT","SIXDOFDYNAMICS","LIBRARY"]);
 
