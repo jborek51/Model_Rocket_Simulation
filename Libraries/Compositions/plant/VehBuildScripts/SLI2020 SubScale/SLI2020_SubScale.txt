@@ -2,26 +2,10 @@ Veh.length.Value = 5.4292e-01
 Veh.length.Unit = 'm'
 Veh.length.NoScale = false
 Veh.length.Description = 'Vehicle length'
-Veh.bodyLength.Value = 4.5720e-01
-Veh.bodyLength.Unit = 'm'
-Veh.bodyLength.NoScale = false
-Veh.bodyLength.Description = 'Body-tube length'
-Veh.boatTailLength.Value = 2.2225e-02
-Veh.boatTailLength.Unit = 'm'
-Veh.boatTailLength.NoScale = false
-Veh.boatTailLength.Description = 'Boattail length'
-Veh.noseLength.Value = 6.3500e-02
-Veh.noseLength.Unit = 'm'
-Veh.noseLength.NoScale = false
-Veh.noseLength.Description = 'Nosecone length'
 Veh.diameter.Value = 3.4925e-02
 Veh.diameter.Unit = 'm'
 Veh.diameter.NoScale = false
 Veh.diameter.Description = 'Vehicle diameter'
-Veh.baseDiameter.Value = 2.0320e-02
-Veh.baseDiameter.Unit = 'm'
-Veh.baseDiameter.NoScale = false
-Veh.baseDiameter.Description = 'Diameter of the base of the rocket'
 Veh.structMass.Value = 5.0300e-01
 Veh.structMass.Unit = 'kg'
 Veh.structMass.NoScale = false
@@ -42,6 +26,10 @@ Veh.rCP_B.Value = [0.38569392;0;0]
 Veh.rCP_B.Unit = 'm'
 Veh.rCP_B.NoScale = false
 Veh.rCP_B.Description = 'Vector going from the nose to the center of pressure'
+Veh.selectCP.Value = 0.0000e+00
+Veh.selectCP.Unit is unitless or has no unit specified
+Veh.selectCP.NoScale = false
+Veh.selectCP.Description = 'CP method selection: 0 = set;  1 = dynamic'
 Veh.numFins.Value = 4.0000e+00
 Veh.numFins.Unit is unitless or has no unit specified
 Veh.numFins.NoScale = true
@@ -74,6 +62,38 @@ Veh.finIncidence.Value = 0.0000e+00
 Veh.finIncidence.Unit = 'deg'
 Veh.finIncidence.NoScale = false
 Veh.finIncidence.Description = 'Fin flow incidence angle'
+Veh.K.Value = 1.0000e+00
+Veh.K.Unit is unitless or has no unit specified
+Veh.K.NoScale = false
+Veh.K.Description = 'Rocket body lift correction constant'
+Veh.noseShape.Value = 'Haack'
+Veh.noseShape.Unit is unitless or has no unit specified
+Veh.noseShape.NoScale = true
+Veh.noseShape.Description = 'Nosecone shape (Conical, Ogive, Parabolic, Haack)'
+Veh.noseLength.Value = 6.3500e-02
+Veh.noseLength.Unit = 'm'
+Veh.noseLength.NoScale = false
+Veh.noseLength.Description = 'Nosecone length'
+Veh.CnNose.Value = 2.0000e+00
+Veh.CnNose.Unit is unitless or has no unit specified
+Veh.CnNose.NoScale = false
+Veh.CnNose.Description = 'Nosecone stability derivative'
+Veh.bodyLength.Value = 4.5720e-01
+Veh.bodyLength.Unit = 'm'
+Veh.bodyLength.NoScale = false
+Veh.bodyLength.Description = 'Body-tube length'
+Veh.boatLE.Value = 5.2070e-01
+Veh.boatLE.Unit = 'm'
+Veh.boatLE.NoScale = false
+Veh.boatLE.Description = 'Distance from nose to boattail leading edge'
+Veh.boatTailLength.Value = 2.2225e-02
+Veh.boatTailLength.Unit = 'm'
+Veh.boatTailLength.NoScale = false
+Veh.boatTailLength.Description = 'Boattail length'
+Veh.baseDiameter.Value = 2.0320e-02
+Veh.baseDiameter.Unit = 'm'
+Veh.baseDiameter.NoScale = false
+Veh.baseDiameter.Description = 'Diameter of the base of the rocket'
 Veh.motor.motorName.Value = 'E30.mat'
 Veh.motor.motorName.Unit is unitless or has no unit specified
 Veh.motor.motorName.NoScale = false
@@ -126,11 +146,32 @@ Veh.airMass.Value = 5.3200e-01
 Veh.airMass.Unit = 'kg'
 Veh.airMass.NoScale = false
 Veh.airMass.Description = 'Vehicle mass after motor burn'
-Veh.finPlanformArea.Value = 1.3306e-03
-Veh.finPlanformArea.Unit = 'm^2'
-Veh.finPlanformArea.NoScale = false
-Veh.finPlanformArea.Description = 'Fin planform area'
-Veh.M6x6_B.Value = [0.532 0 0 0 0 0;0 0.532 0 0 0 0.1553972;0 0 0.532 0 -0.1553972 0;0 0 0 9.0516198e-05 -1.1688957e-09 -4.4686242e-09;0 0 -0.1553972 -1.1688957e-09 0.05028732202 0;0 0.1553972 0 -4.4686242e-09 0 0.05028732212]
-Veh.M6x6_B.Unit is unitless or has no unit specified
-Veh.M6x6_B.NoScale = false
-Veh.M6x6_B.Description = '6x6 Mass-Inertia Matrix with origin at Wing LE Mid-Span'
+Veh.CnFin.Value = 8.9990e+00
+Veh.CnFin.Unit is unitless or has no unit specified
+Veh.CnFin.NoScale = false
+Veh.CnFin.Description = 'Fin stability derivative'
+Veh.CnBoat.Value = 3.9082e+00
+Veh.CnBoat.Unit is unitless or has no unit specified
+Veh.CnBoat.NoScale = false
+Veh.CnBoat.Description = 'Boattail stability derivative'
+Veh.CnRocket.Value = 1.4907e+01
+Veh.CnRocket.Unit is unitless or has no unit specified
+Veh.CnRocket.NoScale = false
+Veh.CnRocket.Description = 'Rocket base stability derivative'
+Veh.XcpNose.Value = 3.1750e-02
+Veh.XcpNose.Unit = 'm'
+Veh.XcpNose.NoScale = false
+Veh.XcpNose.Description = 'Nosecone center of pressure location'
+Veh.XcpFin.Value = 4.9209e-01
+Veh.XcpFin.Unit = 'm'
+Veh.XcpFin.NoScale = false
+Veh.XcpFin.Description = 'Nosecone center of pressure location'
+Veh.XcpBoat.Value = 5.3083e-01
+Veh.XcpBoat.Unit = 'm'
+Veh.XcpBoat.NoScale = false
+Veh.XcpBoat.Description = 'Boattail center of pressure location'
+Veh.XcpBody.Value = 2.9210e-01
+Veh.XcpBody.Unit = 'm'
+Veh.XcpBody.NoScale = false
+Veh.XcpBody.Description = 'Body center of pressure location'
+Veh.rCP_Bx is non-string and non-numeric and takes up 7.5000e+01 bytes

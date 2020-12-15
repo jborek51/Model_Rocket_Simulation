@@ -10,6 +10,7 @@ classdef vehicle < dynamicprops
         rCMpad_B
         rCMair_B
         rCP_B
+        selectCP
         
         numFins
         finLE
@@ -53,8 +54,10 @@ classdef vehicle < dynamicprops
         Ar
         Ap
         
+        finOutline
         finPlanformArea
         M6x6_B
+        initPosVecNose
     end
     
     methods
@@ -74,6 +77,7 @@ classdef vehicle < dynamicprops
             obj.rCMpad_B            = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the CM before motor burn');
             obj.rCMair_B            = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the CM before motor burn');
             obj.rCP_B               = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the center of pressure');
+            obj.selectCP            = SIM.parameter('Value',0,'Unit','','Description','CP method selection: 0 = set;  1 = dynamic');
             
             % Overall fin properties 
             obj.numFins         = SIM.parameter('Unit','','Description','Number of fins','NoScale',true);
@@ -247,6 +251,11 @@ classdef vehicle < dynamicprops
             X = XLE+1/2*Lb;
             val = SIM.parameter('Value',X,'Unit','m','Description','Body center of pressure location');
         end
+        
+        function val = get.initPosVecNose(obj)
+            xNose = obj.initPosVecGnd.Value+[0,0,obj.rCMpad_B.Value(1)]';
+            val = SIM.parameter('Value',xNose,'Unit','m','Description','Initial nose position represented in the inertial frame');
+        end
         % aerodynamic reference area
         function val = get.finPlanformArea(obj)
             Sref = 1/2*obj.finLength.Value*(obj.finRootChord.Value+obj.finTipChord.Value);
@@ -271,6 +280,40 @@ classdef vehicle < dynamicprops
                          -x*z     , -y*z     , x^2 + y^2]);
             val = SIM.parameter('Value',M,'Unit','','Description',...
                 '6x6 Mass-Inertia Matrix with origin at Wing LE Mid-Span');
+        end
+        
+        function val = get.finOutline(obj)
+            %Returns the points of points in the body frame, relative to
+            %the Wing leading edge. The points go clockwise looking down
+            %from the surface positive z axis.
+            %For 2 symmetric trapazoids, it starts in the center LE
+            pts = zeros(obj.numFins.Value*3,5); 
+            R = obj.diameter.Value/2;
+            LE = obj.finLE.Value;
+            sw = obj.finSweep.Value;
+            t = obj.finTipChord.Value;
+            r = obj.finRootChord.Value;
+            L = obj.finLength.Value;
+            %  point 1
+            pts(1,1) = LE;  pts(4,1) = LE;  pts(7,1) = LE;  pts(10,1) = LE;
+            pts(2,1) = R;   pts(5,1) = -R;  pts(9,1) = R;   pts(12,1) = -R;
+            %  point 2
+            pts(1,2) = LE+L/cosd(sw)*sind(sw);  pts(4,2) = LE+L/cosd(sw)*sind(sw);  
+            pts(7,2) = LE+L/cosd(sw)*sind(sw);  pts(10,2) = LE+L/cosd(sw)*sind(sw);  
+            pts(2,2) = L+R;  pts(5,2) = -L-R;  pts(9,2) = L+R;  pts(12,2) = -L-R; 
+            %  point 3
+            pts(1,3) = LE+L/cosd(sw)*sind(sw)+t;  pts(4,3) = LE+L/cosd(sw)*sind(sw)+t;  
+            pts(7,3) = LE+L/cosd(sw)*sind(sw)+t;  pts(10,3) = LE+L/cosd(sw)*sind(sw)+t;  
+            pts(2,3) = L+R;  pts(5,3) = -L-R;  pts(9,3) = L+R;  pts(12,3) = -L-R; 
+            %  point 4
+            pts(1,4) = LE+r; pts(4,4) = LE+r; pts(7,4) = LE+r;  pts(10,4) = LE+r;  
+            pts(2,4) = R;    pts(5,4) = -R;   pts(9,4) = R;     pts(12,4) = -R; 
+            %  point 5
+            pts(1,5) = LE;  pts(4,5) = LE;  pts(7,5) = LE;  pts(10,5) = LE;
+            pts(2,5) = R;   pts(5,5) = -R;  pts(9,5) = R;   pts(12,5) = -R;
+
+            val = SIM.parameter('Value',pts,'Unit','m','Description',...
+                'Fin outer postion points.');
         end
         
         %% other methods
@@ -307,6 +350,7 @@ classdef vehicle < dynamicprops
             addParameter(p,'EulerAngles',[0 0 0],@isnumeric)
             addParameter(p,'Position',[0 0 0]',@isnumeric)
             addParameter(p,'fuseRings',8,@isnumeric);
+            addParameter(p,'noseRings',3,@isnumeric);
             addParameter(p,'Basic',false,@islogical) % Only plots aero surfaces if true
             parse(p,varargin{:})
             
@@ -325,108 +369,87 @@ classdef vehicle < dynamicprops
                 h.ax = p.Results.AxHandle;
             end
             
-            fs = obj.getPropsByClass("VEH.aeroSurf");
-            % Aero surfaces (and fuselage)
+            %  Plot fins
             for ii = 1:4
-                pts = R*obj.(fs{ii}).outlinePtsBdy.Value;
+                i1 = 3*(ii-1)+1;
+                i2 = 3*(ii-1)+3;
+                pts = obj.finOutline.Value(i1:i2,:);
                 h.surf{ii} = plot3(h.ax,...
-                    pts(1,:)+p.Results.Position(1),...
-                    pts(2,:)+p.Results.Position(2),...
-                    pts(3,:)+p.Results.Position(3),...
+                    pts(1,:),...
+                    pts(2,:),...
+                    pts(3,:),...
                     'LineWidth',1.2,'Color','k','LineStyle','-',...
                     'DisplayName','Fluid Dynamic Surfaces');
                 hold on
             end
-            if p.Results.fuseRings == 0
-                fusepts = [obj.fuse.rNose_LE.Value obj.fuse.rEnd_LE.Value];
-                h.surf{5} = plot3(h.ax,fusepts(1,:),fusepts(2,:),fusepts(3,:),...
-                                  'LineWidth',1.2,'Color','k','LineStyle','-',...
-                                  'DisplayName','Fluid Dynamic Surfaces');
-            else
-                x=linspace(obj.fuse.rNose_LE.Value(1)+obj.fuse.diameter.Value/2,obj.fuse.rEnd_LE.Value(1)-obj.fuse.diameter.Value/2,p.Results.fuseRings);
-                perSlice = 10;
-                x = reshape(repmat(x,perSlice,1),[1 numel(x)*perSlice]);
-                th=linspace(0,2*pi,perSlice);
-                d=obj.fuse.diameter.Value;
-                y=repmat(d/2*cos(th),1,p.Results.fuseRings);
-                z=repmat(d/2*sin(th),1,p.Results.fuseRings);
-                numextra=(perSlice-1)*2;
-                xend=x(end);
-                for i = 0:numextra-1
-                    if mod(i,4)==0 || mod(i,4)==3
-                        x(end+1)=x(1);
-                    else
-                        x(end+1)=xend;
-                    end
+            %  Plot body
+            x = linspace(obj.noseLength.Value,obj.noseLength.Value+obj.bodyLength.Value,p.Results.fuseRings);
+            perSlice = 16;
+            x = reshape(repmat(x,perSlice,1),[1 numel(x)*perSlice]);
+            th = linspace(0,2*pi,perSlice);
+            y = repmat(obj.diameter.Value/2*cos(th),1,p.Results.fuseRings);
+            z = repmat(obj.diameter.Value/2*sin(th),1,p.Results.fuseRings);
+            numextra = (perSlice-1)*2;
+            xend = x(end);
+            for i = 0:numextra-1
+                if mod(i,4) == 0 || mod(i,4) == 3
+                    x(end+1) = x(1);
+                else
+                    x(end+1) = xend;
                 end
-                y(end+1:end+numextra) = reshape(repmat(y(2:perSlice),2,1),[1 numextra]);
-                z(end+1:end+numextra) = reshape(repmat(z(2:perSlice),2,1),[1 numextra]);
-                
-                [sx, sy, sz]=sphere;
-                sx = reshape(obj.fuse.diameter.Value/2*sx,[1 numel(sx)]);
-                sy = reshape(obj.fuse.diameter.Value/2*sy,[1 numel(sy)]);
-                sz = reshape(obj.fuse.diameter.Value/2*sz,[1 numel(sz)]);
-                nosex = sy(1:ceil(numel(sx)/2))+obj.fuse.rNose_LE.Value(1)+obj.fuse.diameter.Value/2;
-                nosey = sx(1:ceil(numel(sx)/2));
-                nosez = sz(1:ceil(numel(sx)/2));
-%                 x(end+1:end+numel(nosex))=nosex;
-%                 y(end+1:end+numel(nosey))=nosey;
-%                 z(end+1:end+numel(nosez))=nosez;
-                
-                endx = sy(ceil(numel(sx)/2):end)+obj.fuse.rEnd_LE.Value(1)-obj.fuse.diameter.Value/2;
-                endy = sx(ceil(numel(sx)/2):end);
-                endz = sz(ceil(numel(sx)/2):end);
-%                 x(end+1:end+numel(endx))=endx;
-%                 y(end+1:end+numel(endy))=endy;
-%                 z(end+1:end+numel(endz))=endz;
-                
-                
-                h.surf{5}=plot3(h.ax,x,y,z,'LineWidth',.2,'Color','k','LineStyle','-',...
-                      'DisplayName','Fluid Dynamic Surfaces');
-                h.surf{6}=plot3(h.ax,nosex,nosey,nosez,'LineWidth',.2,'Color','k','LineStyle','-',...
-                      'DisplayName','Fluid Dynamic Surfaces');
-                h.surf{7}=plot3(h.ax,endx,endy,endz,'LineWidth',.2,'Color','k','LineStyle','-',...
-                      'DisplayName','Fluid Dynamic Surfaces');
             end
-                         
-            if ~p.Results.Basic
-                % Tether attachment points
-                for ii = 1:obj.numTethers.Value
-                    pts = R*obj.thrAttchPts_B(ii).posVec.Value;
-                    h.thrAttchPts{ii} = plot3(h.ax,...
-                        pts(1)+p.Results.Position(1),...
-                        pts(2)+p.Results.Position(2),...
-                        pts(3)+p.Results.Position(3),...
-                        'r+','DisplayName','Tether Attachment Point');
-                end
-                % Turbines
-                for ii = 1:obj.numTurbines.Value
-                    pts = eval(sprintf('R*obj.turb%d.attachPtVec.Value',ii));
-                    h.turb{ii} = plot3(h.ax,...
-                        pts(1)+p.Results.Position(1),...
-                        pts(2)+p.Results.Position(2),...
-                        pts(3)+p.Results.Position(3),...
-                        'm+','DisplayName','Turbine Attachment Point');
-                end
-                
-                for ii = 1:4
-                    pts = R*obj.fluidMomentArms.Value(:,ii);
-                    h.momArms{ii} = plot3(h.ax,...
-                        pts(1)+p.Results.Position(1),...
-                        pts(2)+p.Results.Position(2),...
-                        pts(3)+p.Results.Position(3),...
-                        'b+','DisplayName','Fluid Dynamic Center');
-                    
-                end
+            y(end+1:end+numextra) = reshape(repmat(y(2:perSlice),2,1),[1 numextra]);
+            z(end+1:end+numextra) = reshape(repmat(z(2:perSlice),2,1),[1 numextra]);
+                        
+            h.surf{5}=plot3(h.ax,x,y,z,'LineWidth',.2,'Color','k','LineStyle','-',...
+                'DisplayName','Fluid Dynamic Surfaces');
+            %  Plot nose
+            L = obj.noseLength.Value;
+            N = p.Results.noseRings;
+            r = obj.diameter.Value/2;
+            x = linspace(0,L,N);
+            th = linspace(0,2*pi,16);
+            for i = 1:p.Results.noseRings
+                rVec(i) = x(i)/L*r;
+                C(i,1) = x(i);  C(i,2) = 0;  C(i,3) = 0;
+                X(i,:) = C(i,1)+zeros(size(th));
+                Y(i,:) = C(i,2)+rVec(i)*cos(th);
+                Z(i,:) = C(i,3)+rVec(i)*sin(th);
+            end
+            patch(X,Y,Z,'k')
+            %  Plot boattail
+            xb = [obj.boatLE.Value,obj.boatLE.Value+obj.boatTailLength.Value];
+            rVecb = [r obj.baseDiameter.Value/2];
+            for i = 1:2
+                C(i,1) = xb(i);  C(i,2) = 0;  C(i,3) = 0;
+                Xb(i,:) = C(i,1)+zeros(size(th));
+                Yb(i,:) = C(i,2)+rVecb(i)*cos(th);
+                Zb(i,:) = C(i,3)+rVecb(i)*sin(th);
+            end
+            patch(Xb,Yb,Zb,'k')
+            xCenter = obj.length.Value;
+            yCenter = 0;
+            zCenter = 0;
+            yr = obj.baseDiameter.Value/2 * cos(th) + yCenter;
+            zr = obj.baseDiameter.Value/2 * sin(th) + zCenter;
+            xr = zeros(1, numel(th)) + xCenter;
+            plot3(xr, yr, zr, 'k-', 'LineWidth', 1);
+
+            if ~p.Results.Basic                
                 % Center of mass
                 h.centOfMass = plot3(h.ax,...
-                                    obj.rCM_LE.Value(1)+p.Results.Position(1),...
-                                    obj.rCM_LE.Value(2)+p.Results.Position(2),...
-                                    obj.rCM_LE.Value(3)+p.Results.Position(3),...
+                                    obj.rCMpad_B.Value(1)+p.Results.Position(1),...
+                                    obj.rCMpad_B.Value(2)+p.Results.Position(2),...
+                                    obj.rCMpad_B.Value(3)+p.Results.Position(3),...
                                     'r*','DisplayName','Center of Mass');
+                % Center of mass
+                h.centOfPress = plot3(h.ax,...
+                                    obj.rCP_B.Value(1)+p.Results.Position(1),...
+                                    obj.rCP_B.Value(2)+p.Results.Position(2),...
+                                    obj.rCP_B.Value(3)+p.Results.Position(3),...
+                                    'b*','DisplayName','Center of Pressure');
                 % Coordinate origin
-                h.origin = plot3(h.ax,p.Results.Position(1),p.Results.Position(2),p.Results.Position(3),'kx','DisplayName','Body Frame Origin/Leading Edge');
-                legend(h.ax,[h.surf{1} h.thrAttchPts{1} h.turb{1} h.momArms{2} h.centOfMass h.origin],'Location','northeast')
+                legend(h.ax,[h.surf{1} h.centOfMass h.centOfPress],'Location','northwest')
             end
             grid on
             axis equal
