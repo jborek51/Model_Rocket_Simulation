@@ -416,7 +416,7 @@ classdef vehicle < dynamicprops
                 Y(i,:) = C(i,2)+rVec(i)*cos(th);
                 Z(i,:) = C(i,3)+rVec(i)*sin(th);
             end
-            patch(X,Y,Z,'k')
+            h.nose = patch(X,Y,Z,'k');
             %  Plot boattail
             xb = [obj.boatLE.Value,obj.boatLE.Value+obj.boatTailLength.Value];
             rVecb = [r obj.baseDiameter.Value/2];
@@ -426,14 +426,14 @@ classdef vehicle < dynamicprops
                 Yb(i,:) = C(i,2)+rVecb(i)*cos(th);
                 Zb(i,:) = C(i,3)+rVecb(i)*sin(th);
             end
-            patch(Xb,Yb,Zb,'k')
+            h.boat{1} = patch(Xb,Yb,Zb,'k');
             xCenter = obj.length.Value;
             yCenter = 0;
             zCenter = 0;
             yr = obj.baseDiameter.Value/2 * cos(th) + yCenter;
             zr = obj.baseDiameter.Value/2 * sin(th) + zCenter;
             xr = zeros(1, numel(th)) + xCenter;
-            plot3(xr, yr, zr, 'k-', 'LineWidth', 1);
+            h.boat{2} = plot3(xr, yr, zr, 'k-', 'LineWidth', 1);
 
             if ~p.Results.Basic                
                 % Center of mass
