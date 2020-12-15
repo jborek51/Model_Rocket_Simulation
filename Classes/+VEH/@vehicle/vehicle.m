@@ -368,14 +368,14 @@ classdef vehicle < dynamicprops
             else
                 h.ax = p.Results.AxHandle;
             end
-            
+            orig = obj.rCMpad_B.Value(1);
             %  Plot fins
             for ii = 1:4
                 i1 = 3*(ii-1)+1;
                 i2 = 3*(ii-1)+3;
                 pts = obj.finOutline.Value(i1:i2,:);
                 h.surf{ii} = plot3(h.ax,...
-                    pts(1,:),...
+                    pts(1,:)-orig,...
                     pts(2,:),...
                     pts(3,:),...
                     'LineWidth',1.2,'Color','k','LineStyle','-',...
@@ -401,7 +401,7 @@ classdef vehicle < dynamicprops
             y(end+1:end+numextra) = reshape(repmat(y(2:perSlice),2,1),[1 numextra]);
             z(end+1:end+numextra) = reshape(repmat(z(2:perSlice),2,1),[1 numextra]);
                         
-            h.surf{5}=plot3(h.ax,x,y,z,'LineWidth',.2,'Color','k','LineStyle','-',...
+            h.surf{5} = plot3(h.ax,x-orig,y,z,'LineWidth',.2,'Color','k','LineStyle','-',...
                 'DisplayName','Fluid Dynamic Surfaces');
             %  Plot nose
             L = obj.noseLength.Value;
@@ -412,13 +412,13 @@ classdef vehicle < dynamicprops
             for i = 1:p.Results.noseRings
                 rVec(i) = x(i)/L*r;
                 C(i,1) = x(i);  C(i,2) = 0;  C(i,3) = 0;
-                X(i,:) = C(i,1)+zeros(size(th));
+                X(i,:) = C(i,1)+zeros(size(th))-orig;
                 Y(i,:) = C(i,2)+rVec(i)*cos(th);
                 Z(i,:) = C(i,3)+rVec(i)*sin(th);
             end
-            h.nose = patch(X,Y,Z,'k');
+            h.surf{6} = patch(X,Y,Z,'k');
             %  Plot boattail
-            xb = [obj.boatLE.Value,obj.boatLE.Value+obj.boatTailLength.Value];
+            xb = [obj.boatLE.Value,obj.boatLE.Value+obj.boatTailLength.Value]-orig;
             rVecb = [r obj.baseDiameter.Value/2];
             for i = 1:2
                 C(i,1) = xb(i);  C(i,2) = 0;  C(i,3) = 0;
@@ -426,25 +426,25 @@ classdef vehicle < dynamicprops
                 Yb(i,:) = C(i,2)+rVecb(i)*cos(th);
                 Zb(i,:) = C(i,3)+rVecb(i)*sin(th);
             end
-            h.boat{1} = patch(Xb,Yb,Zb,'k');
+            h.surf{7} = patch(Xb,Yb,Zb,'k');
             xCenter = obj.length.Value;
             yCenter = 0;
             zCenter = 0;
             yr = obj.baseDiameter.Value/2 * cos(th) + yCenter;
             zr = obj.baseDiameter.Value/2 * sin(th) + zCenter;
             xr = zeros(1, numel(th)) + xCenter;
-            h.boat{2} = plot3(xr, yr, zr, 'k-', 'LineWidth', 1);
+            h.surf{8} = plot3(xr-orig, yr, zr, 'k-', 'LineWidth', 1);
 
             if ~p.Results.Basic                
                 % Center of mass
                 h.centOfMass = plot3(h.ax,...
-                                    obj.rCMpad_B.Value(1)+p.Results.Position(1),...
+                                    obj.rCMpad_B.Value(1)+p.Results.Position(1)-orig,...
                                     obj.rCMpad_B.Value(2)+p.Results.Position(2),...
                                     obj.rCMpad_B.Value(3)+p.Results.Position(3),...
                                     'r*','DisplayName','Center of Mass');
                 % Center of mass
                 h.centOfPress = plot3(h.ax,...
-                                    obj.rCP_B.Value(1)+p.Results.Position(1),...
+                                    obj.rCP_B.Value(1)+p.Results.Position(1)-orig,...
                                     obj.rCP_B.Value(2)+p.Results.Position(2),...
                                     obj.rCP_B.Value(3)+p.Results.Position(3),...
                                     'b*','DisplayName','Center of Pressure');
