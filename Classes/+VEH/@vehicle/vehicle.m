@@ -12,6 +12,9 @@ classdef vehicle < dynamicprops
         rCP_B
         selectCP
         
+        dragCoef
+        sideCoef
+        
         numFins
         finLE
         finThickness
@@ -49,9 +52,9 @@ classdef vehicle < dynamicprops
         XcpFin
         XcpBoat
         XcpBody
-        rCP_Bx
         
         Ar
+        As
         Ap
         
         finOutline
@@ -79,6 +82,9 @@ classdef vehicle < dynamicprops
             obj.rCP_B               = SIM.parameter('Value',[0;0;0],'Unit','m','Description','Vector going from the nose to the center of pressure');
             obj.selectCP            = SIM.parameter('Value',0,'Unit','','Description','CP method selection: 0 = set;  1 = dynamic');
             
+            obj.dragCoef            = SIM.parameter('Unit','','Description','Drag coefficient at 0 angle of attack');
+            obj.sideCoef            = SIM.parameter('Unit','','Description','Drag coefficient at 90 angle of attack');
+
             % Overall fin properties 
             obj.numFins         = SIM.parameter('Unit','','Description','Number of fins','NoScale',true);
             obj.finLE           = SIM.parameter('Unit','m','Description','Distance from nose to fin leading edge');
@@ -201,13 +207,19 @@ classdef vehicle < dynamicprops
                                   
         function val = get.Ar(obj)
             ar = pi/4*obj.diameter.Value^2;
-            val = SIM.parameter('Value',ar,'Unit','m^2','Description','Rocket base stability derivative');
+            val = SIM.parameter('Value',ar,'Unit','m^2','Description','Rocket body cross-sectional area');
         end
                                   
+        function val = get.As(obj)
+            an = 1/2*obj.diameter.Value*obj.noseLength.Value;
+            ab = obj.diameter.Value*(obj.bodyLength.Value+obj.boatTailLength.Value);
+            val = SIM.parameter('Value',an+ab,'Unit','m^2','Description','Rocket projected area from side');
+        end
+        
         function val = get.Ap(obj)
             an = pi*obj.diameter.Value*(sqrt(obj.diameter.Value^2+obj.noseLength.Value^2));
             ab = pi*obj.diameter.Value*(obj.bodyLength.Value+obj.boatTailLength.Value);
-            val = SIM.parameter('Value',an+ab,'Unit','m^2','Description','Rocket base stability derivative');
+            val = SIM.parameter('Value',an+ab,'Unit','m^2','Description','Rocket planform area');
         end
         
         function val = get.XcpNose(obj)
@@ -256,7 +268,7 @@ classdef vehicle < dynamicprops
             xNose = obj.initPosVecGnd.Value+[0,0,obj.rCMpad_B.Value(1)]';
             val = SIM.parameter('Value',xNose,'Unit','m','Description','Initial nose position represented in the inertial frame');
         end
-        % aerodynamic reference area
+        
         function val = get.finPlanformArea(obj)
             Sref = 1/2*obj.finLength.Value*(obj.finRootChord.Value+obj.finTipChord.Value);
             val = SIM.parameter('Value',Sref,'Unit','m^2',...
@@ -323,24 +335,6 @@ classdef vehicle < dynamicprops
             for ii = 1:numel(props)
                 obj.(props{ii}).scale(lengthScaleFactor,densityScaleFactor);
             end
-        end
-        
-        %Sets initial conditions on the path at the specified pathVariable
-        function setICsOnPath(obj,initPathVar,pathFunc,geomParams,pathCntrPt,speed) %#ok<INUSL>
-            % Sets initial conditions of the vehicle to be on the path
-            [initPos,initVel] = eval(sprintf('%s(initPathVar,geomParams,pathCntrPt)',pathFunc));
-            obj.setInitPosVecGnd(initPos,'m');
-            obj.setInitVelVecBdy([-speed 0 0],'m/s');
-            % Initial body z points radially out
-            bdyZ = (initPos(:)-pathCntrPt(:))./sqrt(sum((initPos(:)-pathCntrPt(:)).^2));
-            % Initial body x points backwards (opposite velocity(
-            bdyX = -initVel;
-            % Initial body y is calculated from the cross product of z & x
-            bdyY = cross(bdyZ,bdyX);
-            % Calculate euler angles from the rotation matrix
-            obj.setInitEulAng(flip(rotm2eul([bdyX(:)'; bdyY(:)'; bdyZ(:)']')),'rad')
-            % Initial angular velocity is zero
-            obj.setInitAngVelVec([0 0 0],'rad/s');
         end
                 
         function h = plot(obj,varargin)
@@ -460,163 +454,6 @@ classdef vehicle < dynamicprops
             
             set(gca,'DataAspectRatio',[1 1 1])
         end   
-        
-        function plotCoeffPolars(obj)
-            fh = findobj( 'Type', 'Figure', 'Name', 'Partitioned Aero Coeffs');
-            
-            if isempty(fh)
-                fh = figure;
-                fh.Position =[102 92 3*560 2*420];
-                fh.Name ='Partitioned Aero Coeffs';
-            else
-                figure(fh);
-            end
-            
-            % left wing
-            ax1 = subplot(4,4,1);
-            plot(obj.portWing.alpha.Value,obj.portWing.CL.Value);
-            hWingCL_ax = gca;
-            
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{L}$')
-            title('Port Wing')
-            grid on
-            hold on
-            
-            ax5 = subplot(4,4,5);
-            plot(obj.portWing.alpha.Value,obj.portWing.CD.Value);
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{D}$')
-            grid on
-            hold on
-            hWingCD_ax = gca;
-            
-            ax9 = subplot(4,4,9);
-            plot(obj.portWing.alpha.Value,obj.portWing.CL.Value(:)./obj.portWing.CD.Value(:))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}}{C_D}$')
-            grid on
-            hold on
-            
-            ax13 = subplot(4,4,13);
-            plot(obj.portWing.alpha.Value,(obj.portWing.CL.Value(:).^3)./(obj.portWing.CD.Value(:).^2))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}^3}{C_D^2}$')
-            grid on
-            hold on
-                       
-            linkaxes([ax1,ax5,ax9,ax13],'x');
-            
-            % right wing
-            ax2 = subplot(4,4,2);
-            plot(obj.stbdWing.alpha.Value,obj.stbdWing.CL.Value);
-            
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{L}$')
-            title('Starboard Wing')
-            grid on
-            hold on
-            
-            ax6 = subplot(4,4,6);
-            plot(obj.stbdWing.alpha.Value,obj.stbdWing.CD.Value);
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{D}$')
-            grid on
-            hold on
-            
-            ax10 = subplot(4,4,10);
-            plot(obj.stbdWing.alpha.Value,obj.stbdWing.CL.Value(:)./obj.stbdWing.CD.Value(:))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}}{C_D}$')
-            grid on
-            hold on
-            
-            ax14 = subplot(4,4,14);
-            plot(obj.stbdWing.alpha.Value,(obj.stbdWing.CL.Value(:).^3)./(obj.stbdWing.CD.Value(:).^2))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}^3}{C_D^2}$')
-            grid on
-            hold on
-            
-            linkaxes([ax2,ax6,ax10,ax14],'x');
-            
-            % HS
-            ax3 = subplot(4,4,3);
-            plot(obj.hStab.alpha.Value,obj.hStab.CL.Value);
-            hhStabCL_ax = gca;
-            
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{L}$')
-            title('Horizontal stabilizer')
-            grid on
-            hold on
-            
-            ax7 = subplot(4,4,7);
-            plot(obj.hStab.alpha.Value,obj.hStab.CD.Value);
-            hhStabCD_ax = gca;
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{D}$')
-            grid on
-            hold on
-            
-            ax11 = subplot(4,4,11);
-            plot(obj.hStab.alpha.Value,obj.hStab.CL.Value(:)./obj.hStab.CD.Value(:))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}}{C_D}$')
-            grid on
-            hold on
-            
-            ax15 = subplot(4,4,15);
-            plot(obj.hStab.alpha.Value,(obj.hStab.CL.Value(:).^3)./(obj.hStab.CD.Value(:).^3))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}^3}{C_D^2}$')
-            grid on
-            hold on
-            
-            linkaxes([ax3,ax7,ax11,ax15],'x');
-            
-            % VS
-            ax4 = subplot(4,4,4);
-            plot(obj.vStab.alpha.Value,obj.vStab.CL.Value);
-            hvStabCL_ax = gca;
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{L}$')
-            title('Vertical stabilizer')
-            grid on
-            hold on
-            
-            ax8 = subplot(4,4,8);
-            plot(obj.vStab.alpha.Value,obj.vStab.CD.Value);
-            hvStabCD_ax = gca;
-            xlabel('$\alpha$ [deg]')
-            ylabel('$C_{D}$')
-            grid on
-            hold on
-            
-            ax12 = subplot(4,4,12);
-            plot(obj.vStab.alpha.Value,obj.vStab.CL.Value(:)./obj.vStab.CD.Value(:))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}}{C_D}$')
-            grid on
-            hold on
-            
-            ax16 = subplot(4,4,16);
-            plot(obj.vStab.alpha.Value,(obj.vStab.CL.Value(:).^3)./(obj.vStab.CD.Value(:).^3))
-            xlabel('$\alpha$ [deg]')
-            ylabel('$\frac{C_{L}^3}{C_D^2}$')
-            grid on
-            hold on
-            
-            linkaxes([ax4,ax8,ax12,ax16],'x');
-            
-            %             axis([ax1 ax2 ax3 ax4],[-20 20 ...
-%                 min([hWingCL_ax.YLim(1),hhStabCL_ax.YLim(1),hvStabCL_ax.YLim(1)])...
-%                 max([hWingCL_ax.YLim(2),hhStabCL_ax.YLim(2),hvStabCL_ax.YLim(2)])]);
-%             axis([ax5 ax6 ax7 ax8],[-20 20 ...
-%                 min([hWingCD_ax.YLim(1),hhStabCD_ax.YLim(1),hvStabCD_ax.YLim(1)])...
-%                 max([hWingCD_ax.YLim(2),hhStabCD_ax.YLim(2),hvStabCD_ax.YLim(2)])]);
-            
-        end
         
         %Get a struct of parameters of the desired class
         [output,varargout] = struct(obj,className);

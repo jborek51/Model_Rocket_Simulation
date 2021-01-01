@@ -223,7 +223,8 @@ daspect([1 1 1])
 h.fig.Position = p.Results.FigPos;
 % Create a title
 h.title = title({strcat(sprintf('Time = %.1f s',0),',',...
-    sprintf(' Speed = %.1f m/s',norm(tscTmp.velocityVec.Data(:,:,1))))});
+    sprintf(' Speed = %.1f m/s',norm(tscTmp.velocityVec.Data(:,:,1))),',',...
+    sprintf(' Altitude = %.1f m',tscTmp.positionVec.Data(3,1,ii)))});
 
 %% Update the plots
 for ii = 1:numel(tscTmp.positionVec.Time)
@@ -266,7 +267,8 @@ for ii = 1:numel(tscTmp.positionVec.Time)
     % Update the title
     h.title.String = {strcat(...
         sprintf('Time = %.1f s',tscTmp.velocityVec.Time(ii)),',',...
-        sprintf(' Speed = %.1f m/s',norm(tscTmp.velocityVec.getsamples(ii).Data)))};
+        sprintf(' Speed = %.1f m/s',norm(tscTmp.velocityVec.getsamples(ii).Data)),',',...
+        sprintf(' Altitude = %.1f m',tscTmp.positionVec.Data(3,1,ii)))};
             
     if p.Results.VelocityVec
         pt = tscTmp.positionVec.getsamples(ii).Data;

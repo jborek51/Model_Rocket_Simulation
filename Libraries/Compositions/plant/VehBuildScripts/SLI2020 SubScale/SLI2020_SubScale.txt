@@ -30,6 +30,14 @@ Veh.selectCP.Value = 0.0000e+00
 Veh.selectCP.Unit is unitless or has no unit specified
 Veh.selectCP.NoScale = false
 Veh.selectCP.Description = 'CP method selection: 0 = set;  1 = dynamic'
+Veh.dragCoef.Value = 3.0000e-01
+Veh.dragCoef.Unit is unitless or has no unit specified
+Veh.dragCoef.NoScale = false
+Veh.dragCoef.Description = 'Drag coefficient at 0 angle of attack'
+Veh.sideCoef.Value = 1.0000e+00
+Veh.sideCoef.Unit is unitless or has no unit specified
+Veh.sideCoef.NoScale = false
+Veh.sideCoef.Description = 'Drag coefficient at 90 angle of attack'
 Veh.numFins.Value = 4.0000e+00
 Veh.numFins.Unit is unitless or has no unit specified
 Veh.numFins.NoScale = true

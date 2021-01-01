@@ -25,6 +25,9 @@ Veh.rCMpad_B.setValue([11.981*in2m;0;0],'m');
 Veh.rCMair_B.setValue([11.5*in2m;0;0],'m');
 Veh.rCP_B.setValue([15.1848*in2m;0;0],'m');
 
+Veh.dragCoef.setValue(.3,'');
+Veh.sideCoef.setValue(1,'');
+
 Veh.structMass.setValue(.503,'kg');
 Ixx = 9.0516198e-05;    Iyy = 4.8957999e-03;    Izz = 4.8958000e-03;
 Ixy = 1.1688957e-09;    Ixz = 4.4686242e-09;    Iyz = 0;
